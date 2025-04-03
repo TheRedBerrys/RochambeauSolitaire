@@ -120,10 +120,53 @@ class Game {
         return ranksReversed ? card1.rank < card2.rank : card1.rank > card2.rank;
     }
 
+    moveToFreeSpace(stackIndex) {
+        if (this.freeSpace === null && this.stacks[stackIndex].length > 0) {
+            this.freeSpace = this.stacks[stackIndex].shift();
+            this.render();
+            return true;
+        }
+        return false;
+    }
+
+    moveFromFreeSpace() {
+        if (this.freeSpace && this.canPlaceCard(this.freeSpace)) {
+            this.endStack.push(this.freeSpace);
+            this.freeSpace = null;
+            this.render();
+            return true;
+        }
+        return false;
+    }
+
+    checkWin() {
+        return this.stacks.every(stack => stack.length === 0) && this.freeSpace === null;
+    }
+
+    checkLose() {
+        if (this.freeSpace === null) return false;
+        return !this.canPlaceCard(this.freeSpace) && !this.stacks.some(stack => stack.length > 0 && this.canPlaceCard(stack[0]));
+    }
+
+    playCard(stackIndex) {
+        if (this.stacks[stackIndex].length === 0) return;
+        let card = this.stacks[stackIndex].shift();
+        if (this.canPlaceCard(card)) {
+            this.endStack = [];
+            this.endStack.push(card);
+        } else if (!this.freeSpace) {
+            this.freeSpace = card;
+        } else {
+            this.stacks[stackIndex].unshift(card); // Return card if move is not possible
+            return;
+        }
+        this.render();
+    }
+
     render() {
         let gameContainer = document.getElementById('game');
         gameContainer.innerHTML = '';
-        
+
         this.stacks.forEach((stack, index) => {
             let stackDiv = document.createElement('div');
             stackDiv.classList.add('stack');
@@ -138,9 +181,15 @@ class Game {
             playButton.textContent = 'Play Top Card';
             playButton.onclick = () => this.playCard(index);
             stackDiv.appendChild(playButton);
+
+            let moveToFreeSpaceButton = document.createElement('button');
+            moveToFreeSpaceButton.textContent = 'Move to Free Space';
+            moveToFreeSpaceButton.onclick = () => this.moveToFreeSpace(index);
+            stackDiv.appendChild(moveToFreeSpaceButton);
+
             gameContainer.appendChild(stackDiv);
         });
-        
+
         let endStackDiv = document.createElement('div');
         endStackDiv.classList.add('end-stack');
         endStackDiv.innerHTML = '<h3>End Stack</h3>';
@@ -151,6 +200,21 @@ class Game {
             endStackDiv.appendChild(cardDiv);
         });
         gameContainer.appendChild(endStackDiv);
+
+        let freeSpaceDiv = document.createElement('div');
+        freeSpaceDiv.classList.add('free-space');
+        freeSpaceDiv.innerHTML = '<h3>Free Space</h3>';
+        if (this.freeSpace) {
+            let cardDiv = document.createElement('div');
+            cardDiv.classList.add('card');
+            cardDiv.textContent = this.freeSpace.toString();
+            let moveFromFreeSpaceButton = document.createElement('button');
+            moveFromFreeSpaceButton.textContent = 'Play this card';
+            moveFromFreeSpaceButton.onclick = () => this.moveFromFreeSpace();
+            cardDiv.appendChild(moveFromFreeSpaceButton);
+            freeSpaceDiv.appendChild(cardDiv);
+        }
+        gameContainer.appendChild(freeSpaceDiv);
     }
 }
 
