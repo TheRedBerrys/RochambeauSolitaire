@@ -7,13 +7,17 @@ class Card {
     }
 
     toString() {
-        return `${this.rank} of ${this.suit}`;
+        return `${this.rank} ${this.suit}`;
     }
 }
 
 class ActionCard extends Card {
     constructor(type) {
         super('Action', type);
+    }
+
+    toString() {
+        return this.rank;
     }
 }
 
@@ -25,20 +29,20 @@ class Deck {
     }
 
     initializeDeck() {
-        const suits = ['Rock', 'Paper', 'Scissors'];
+        const suits = ['🪨', '📄', '✂️'];
         for (let suit of suits) {
             for (let rank = 1; rank <= 11; rank++) {
                 this.cards.push(new Card(suit, rank));
             }
         }
         for (let rank = 1; rank <= 7; rank++) {
-            this.cards.push(new Card('Bomb', rank));
+            this.cards.push(new Card('💣', rank));
         }
 
         const actionCards = [
-            'Rank Before Suit', 'Rank Before Suit', 'Rank Before Suit',
-            'Suits Reversed', 'Suits Reversed', 'Suits Reversed',
-            'Ranks Reversed', 'Ranks Reversed'
+            '# 1st', '# 1st', '# 1st',
+            '🪨>📄>️✂>💣', '🪨>📄>️✂>💣', '🪨>📄>️✂>💣',
+            '1 > 9', '1 > 9'
         ];
         
         for (let action of actionCards) {
@@ -72,7 +76,10 @@ class Game {
     }
 
     canPlaceCard(card) {
-        if (this.endStack.length === 0 || card instanceof ActionCard) {
+        if (this.endStack.length === 0 && !(card instanceof ActionCard)) {
+            return true;
+        }
+        if (this.endStack.length > 0 && card instanceof ActionCard) {
             return true;
         }
         let topCard = this.getTopRegularCard();
@@ -98,9 +105,9 @@ class Game {
         let { regularCard: card2, actionCards } = card2Info;
         if (!card2) return true;
 
-        let rankBeforeSuit = actionCards.some(card => card.rank === 'Rank Before Suit');
-        let suitsReversed = actionCards.some(card => card.rank === 'Suits Reversed');
-        let ranksReversed = actionCards.some(card => card.rank === 'Ranks Reversed');
+        let rankBeforeSuit = actionCards.some(card => card.rank === '# 1st');
+        let suitsReversed = actionCards.some(card => card.rank === '🪨>📄>️✂>💣');
+        let ranksReversed = actionCards.some(card => card.rank === '1 > 9');
         
         if (rankBeforeSuit) {
             if (card1.rank !== card2.rank) {
@@ -109,12 +116,17 @@ class Game {
         }
         
         const defeatsMap = suitsReversed 
-            ? { 'Scissors': 'Rock', 'Rock': 'Paper', 'Paper': 'Scissors' }
-            : { 'Rock': 'Scissors', 'Paper': 'Rock', 'Scissors': 'Paper' };
+            ? { '✂️': '🪨', '🪨': '📄', '📄': '✂️' }
+            : { '🪨': '✂️', '📄': '🪨', '✂️': '📄' };
 
-        if (card1.suit === 'Bomb') return true;
-        if (card2.suit === 'Bomb') return false;
         if (card1.suit !== card2.suit) {
+            if (suitsReversed) {
+                if (card2.suit === '💣') return true;
+                if (card1.suit === '💣') return false;
+            } else {
+                if (card1.suit === '💣') return true;
+                if (card2.suit === '💣') return false;
+            }
             return defeatsMap[card1.suit] === card2.suit;
         }
         return ranksReversed ? card1.rank < card2.rank : card1.rank > card2.rank;
@@ -122,7 +134,7 @@ class Game {
 
     moveToFreeSpace(stackIndex) {
         if (this.freeSpace === null && this.stacks[stackIndex].length > 0) {
-            this.freeSpace = this.stacks[stackIndex].shift();
+            this.freeSpace = this.stacks[stackIndex].pop();
             this.render();
             return true;
         }
@@ -150,17 +162,25 @@ class Game {
 
     playCard(stackIndex) {
         if (this.stacks[stackIndex].length === 0) return;
-        let card = this.stacks[stackIndex].shift();
+        let card = this.stacks[stackIndex].pop();
         if (this.canPlaceCard(card)) {
-            this.endStack = [];
+            if (!(card instanceof ActionCard)) {
+                this.endStack = [];
+            }
             this.endStack.push(card);
-        } else if (!this.freeSpace) {
-            this.freeSpace = card;
         } else {
-            this.stacks[stackIndex].unshift(card); // Return card if move is not possible
+            this.stacks[stackIndex].push(card); // Return card if move is not possible
             return;
         }
         this.render();
+    }
+
+    createCardElement(cardData) {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        card.textContent = card.toString();
+        card.dataset.textContent = card.toString();
+        return card;
     }
 
     render() {
@@ -172,9 +192,7 @@ class Game {
             stackDiv.classList.add('stack');
             stackDiv.innerHTML = `<h3>Stack ${index + 1}</h3>`;
             stack.forEach(card => {
-                let cardDiv = document.createElement('div');
-                cardDiv.classList.add('card');
-                cardDiv.textContent = card.toString();
+                let cardDiv = this.createCardElement(card);
                 stackDiv.appendChild(cardDiv);
             });
             let playButton = document.createElement('button');
@@ -194,7 +212,7 @@ class Game {
         endStackDiv.classList.add('end-stack');
         endStackDiv.innerHTML = '<h3>End Stack</h3>';
         this.endStack.forEach(card => {
-            let cardDiv = document.createElement('div');
+            let cardDiv = this.createCardElement(card);
             cardDiv.classList.add('card');
             cardDiv.textContent = card.toString();
             endStackDiv.appendChild(cardDiv);
@@ -205,14 +223,12 @@ class Game {
         freeSpaceDiv.classList.add('free-space');
         freeSpaceDiv.innerHTML = '<h3>Free Space</h3>';
         if (this.freeSpace) {
-            let cardDiv = document.createElement('div');
-            cardDiv.classList.add('card');
-            cardDiv.textContent = this.freeSpace.toString();
+            let cardDiv = this.createCardElement(this.freeSpace);
             let moveFromFreeSpaceButton = document.createElement('button');
             moveFromFreeSpaceButton.textContent = 'Play this card';
             moveFromFreeSpaceButton.onclick = () => this.moveFromFreeSpace();
-            cardDiv.appendChild(moveFromFreeSpaceButton);
             freeSpaceDiv.appendChild(cardDiv);
+            freeSpaceDiv.appendChild(moveFromFreeSpaceButton);
         }
         gameContainer.appendChild(freeSpaceDiv);
     }
@@ -223,4 +239,5 @@ window.onload = () => {
     document.body.innerHTML = '<div id="game"></div>';
     new Game();
 };
+
 
