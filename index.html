@@ -22,63 +22,80 @@
 
         #game {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
+            gap: 40px; /* Space between main stacks and side area */
+            align-items: flex-start;
+        }
+
+        .main-stacks {
+            display: flex;
+            flex-wrap: wrap;
             gap: 20px;
         }
 
+        .side-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
         .stack, .end-stack, .free-space {
+            position: relative;
+            width: 160px; /* Slightly wider for card overlap visibility */
+            min-height: 800px; /* Adjust height as needed */
             border: 2px dashed #999;
             border-radius: 10px;
             background-color: #ffffffc7;
-            padding: 15px;
-            min-width: 220px;
-            min-height: 120px;
             box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-            display: inline-block;
+            padding: 10px;
+        }
+
+        .end-stack, .free-space {
+            min-height: 300px;
+            gap: 20px;
         }
 
         .card {
-            display: inline-block;
+            position: absolute;
+            left: 30px;
+            width: 120px;
+            height: 180px;
             border: 1px solid #444;
             border-radius: 8px;
             background: white;
-            width: 60px;
-            height: 90px;
-            margin: 4px;
-            padding: 8px;
             box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
             font-size: 1.2rem;
             font-weight: bold;
-            position: relative;
             color: black;
+
+            /* 🔽 Center content */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            /* Optional visual spacing */
+            padding: 4px;
+            box-sizing: border-box;
         }
 
         .card.red {
             color: red;
         }
 
-        .card::before,
-        .card::after {
+        .card::before{
             position: absolute;
             font-size: 0.8rem;
             font-weight: normal;
         }
 
         .card::before {
-            content: attr(data-textContent);
+            content: attr(card-string);
             top: 5px;
             left: 6px;
         }
 
-        .card::after {
-            content: attr(data-textContent);
-            bottom: 5px;
-            right: 6px;
-        }
-
         button {
-            margin-top: 15px;
+            margin: 5px;
             padding: 10px 20px;
             font-size: 1rem;
             background-color: #0077cc;
@@ -97,6 +114,6 @@
 <body>
 <h1>Rochambeau Solitaire</h1>
 <div id="game"></div>
-<script src="game.js"></script>
+<script src="game.js" defer></script>
 </body>
 </html>
