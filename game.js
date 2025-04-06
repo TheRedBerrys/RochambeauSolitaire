@@ -29,7 +29,7 @@ class Deck {
     }
 
     initializeDeck() {
-        const suits = ['🪨', '📄', '✂️️'];
+        const suits = ['🪨', '📄', '✂️'];
         for (let suit of suits) {
             for (let rank = 1; rank <= 11; rank++) {
                 this.cards.push(new Card(suit, rank));
@@ -116,8 +116,8 @@ class Game {
         }
         
         const defeatsMap = suitsReversed 
-            ? { '✂️️': '🪨', '🪨': '📄', '📄': '✂️️' }
-            : { '🪨': '✂️️', '📄': '🪨', '✂️️': '📄' };
+            ? { '✂️': '🪨', '🪨': '📄', '📄': '✂️' }
+            : { '🪨': '✂️', '📄': '🪨', '✂️': '📄' };
 
         if (card1.suit !== card2.suit) {
             if (suitsReversed) {
@@ -181,6 +181,7 @@ class Game {
     createCardElement(card) {
         const cardDiv = document.createElement("div");
         cardDiv.classList.add("card");
+        cardDiv.classList.add(card.suit);
         cardDiv.textContent = card.toString();
         cardDiv.setAttribute("card-string", card.toString());
         return cardDiv;
